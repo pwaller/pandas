@@ -9,7 +9,7 @@ from distutils.version import LooseVersion
 from pandas import compat
 from pandas.compat import u
 from pandas import (Series, DataFrame, Panel, MultiIndex, bdate_range,
-                    date_range, period_range, Index)
+                    date_range, period_range, Index, Categorical)
 from pandas.core.common import PerformanceWarning
 from pandas.io.packers import to_msgpack, read_msgpack
 import pandas.util.testing as tm
@@ -335,7 +335,8 @@ class TestSeries(TestPackers):
             'E': [0., 1, Timestamp('20100101'), 'foo', 2.],
             'F': [Timestamp('20130102', tz='US/Eastern')] * 2 +
                  [Timestamp('20130603', tz='CET')] * 3,
-            'G': [Timestamp('20130102', tz='US/Eastern')] * 5
+            'G': [Timestamp('20130102', tz='US/Eastern')] * 5,
+            'H': Categorical(['a', 'b', 'c', 'd', 'e'])
         }
 
         self.d['float'] = Series(data['A'])
@@ -343,6 +344,7 @@ class TestSeries(TestPackers):
         self.d['mixed'] = Series(data['E'])
         self.d['dt_tz_mixed'] = Series(data['F'])
         self.d['dt_tz'] = Series(data['G'])
+        self.d['categorical'] = Series(data['H'])
 
     def test_basic(self):
 
@@ -365,7 +367,8 @@ class TestNDFrame(TestPackers):
             'D': date_range('1/1/2009', periods=5),
             'E': [0., 1, Timestamp('20100101'), 'foo', 2.],
             'F': [Timestamp('20130102', tz='US/Eastern')] * 5,
-            'G': [Timestamp('20130603', tz='CET')] * 5
+            'G': [Timestamp('20130603', tz='CET')] * 5,
+            'H': Categorical(['a', 'b', 'c', 'd', 'e'])
         }
 
         self.frame = {

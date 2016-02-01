@@ -49,13 +49,15 @@ from pandas import compat
 from pandas.compat import u, u_safe
 from pandas import (Timestamp, Period, Series, DataFrame,  # noqa
                     Index, MultiIndex, Float64Index, Int64Index,
-                    Panel, RangeIndex, PeriodIndex, DatetimeIndex, NaT)
+                    Panel, RangeIndex, PeriodIndex, DatetimeIndex, NaT,
+                    Categorical)
 from pandas.tslib import NaTType
 from pandas.sparse.api import SparseSeries, SparseDataFrame, SparsePanel
 from pandas.sparse.array import BlockIndex, IntIndex
 from pandas.core.generic import NDFrame
 from pandas.core.common import (
     PerformanceWarning,
+    is_categorical_dtype,
     needs_i8_conversion,
     pandas_dtype,
 )
@@ -226,6 +228,7 @@ dtype_dict = {21: np.dtype('M8[ns]'),
               # this is platform int, which we need to remap to np.int64
               # for compat on windows platforms
               7: np.dtype('int64'),
+              'category': 'category'
               }
 
 
@@ -265,6 +268,14 @@ def convert(values):
     if dtype == np.object_:
         return v.tolist()
 
+    if is_categorical_dtype(dtype):
+        return {
+            'codes': {'dtype': values.codes.dtype.name,
+                      'data': convert(values.codes)},
+            'categories': {'dtype': values.categories.dtype.name,
+                           'data': convert(values.categories.values)}
+        }
+
     if compressor == 'zlib':
         _check_zlib()
 
@@ -297,6 +308,15 @@ def unconvert(values, dtype, compress=None):
 
     if as_is_ext:
         values = values.data
+
+    if is_categorical_dtype(dtype):
+        return Categorical.from_codes(
+            unconvert(values['codes']['data'],
+                      dtype_for(values['codes']['dtype']),
+                      compress=compress),
+            unconvert(values['categories']['data'],
+                      dtype_for(values['categories']['dtype']),
+                      compress=compress))
 
     if dtype == np.object_:
         return np.array(values, dtype=object)
@@ -580,11 +600,17 @@ def decode(obj):
         dtype = dtype_for(obj[u'dtype'])
         pd_dtype = pandas_dtype(dtype)
         np_dtype = pandas_dtype(dtype).base
+
+        ctor_dtype = np_dtype
+        if is_categorical_dtype(pd_dtype):
+            # Series ctor doesn't take dtype with categorical
+            ctor_dtype = None
+
         index = obj[u'index']
         result = globals()[obj[u'klass']](unconvert(obj[u'data'], dtype,
                                                     obj[u'compress']),
                                           index=index,
-                                          dtype=np_dtype,
+                                          dtype=ctor_dtype,
                                           name=obj[u'name'])
         tz = getattr(pd_dtype, 'tz', None)
         if tz:

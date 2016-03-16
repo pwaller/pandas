@@ -401,8 +401,6 @@ def encode(obj):
         return {u'typ': u'categorical',
                 u'klass': u(obj.__class__.__name__),
                 u'name': getattr(obj, 'name', None),
-                u'codes_dtype': u(obj._codes.dtype.name),
-                u'categories_dtype': u(obj.categories.dtype.name),
                 u'codes': obj._codes,
                 u'categories': obj.categories,
                 u'ordered': obj.ordered,

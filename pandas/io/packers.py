@@ -413,6 +413,18 @@ def encode(obj):
                     u'dtype': u(obj.dtype.name),
                     u'data': convert(obj.values),
                     u'compress': compressor}
+
+    elif isinstance(obj, Categorical):
+        return {u'typ': u'categorical',
+                u'klass': u(obj.__class__.__name__),
+                u'name': getattr(obj, 'name', None),
+                u'codes_dtype': u(obj._codes.dtype.name),
+                u'categories_dtype': u(obj.categories.dtype.name),
+                u'codes': convert(obj._codes),
+                u'categories': convert(obj.categories),
+                u'ordered': obj.ordered,
+                u'compress': compressor}
+
     elif isinstance(obj, Series):
         if isinstance(obj, SparseSeries):
             raise NotImplementedError(
@@ -596,21 +608,32 @@ def decode(obj):
             result = result.tz_localize('UTC').tz_convert(tz)
         return result
 
+    elif typ == u'categorical':
+
+        codes = unconvert(obj[u'codes'],
+                          dtype_for(obj[u'codes_dtype']),
+                          obj[u'compress'])
+
+        categories = unconvert(obj['categories'],
+                               dtype_for(obj[u'categories_dtype']),
+                               obj[u'compress'])
+
+        from_codes = globals()[obj[u'klass']].from_codes
+        return from_codes(codes=codes,
+                          categories=categories,
+                          ordered=obj[u'ordered'],
+                          name=obj[u'name'])
+
     elif typ == u'series':
         dtype = dtype_for(obj[u'dtype'])
         pd_dtype = pandas_dtype(dtype)
         np_dtype = pandas_dtype(dtype).base
 
-        ctor_dtype = np_dtype
-        if is_categorical_dtype(pd_dtype):
-            # Series ctor doesn't take dtype with categorical
-            ctor_dtype = None
-
         index = obj[u'index']
         result = globals()[obj[u'klass']](unconvert(obj[u'data'], dtype,
                                                     obj[u'compress']),
                                           index=index,
-                                          dtype=ctor_dtype,
+                                          dtype=np_dtype,
                                           name=obj[u'name'])
         tz = getattr(pd_dtype, 'tz', None)
         if tz:

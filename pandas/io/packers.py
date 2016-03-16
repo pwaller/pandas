@@ -401,7 +401,7 @@ def encode(obj):
         return {u'typ': u'categorical',
                 u'klass': u(obj.__class__.__name__),
                 u'name': getattr(obj, 'name', None),
-                u'codes': obj._codes,
+                u'codes': obj.codes,
                 u'categories': obj.categories,
                 u'ordered': obj.ordered,
                 u'compress': compressor}

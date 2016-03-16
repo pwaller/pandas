@@ -13,9 +13,11 @@ from pandas import (Series, DataFrame, Panel, MultiIndex, bdate_range,
 from pandas.core.common import PerformanceWarning
 from pandas.io.packers import to_msgpack, read_msgpack
 import pandas.util.testing as tm
-from pandas.util.testing import (ensure_clean, assert_index_equal,
-                                 assert_series_equal,
+from pandas.util.testing import (ensure_clean,
+                                 assert_categorical_equal,
                                  assert_frame_equal,
+                                 assert_index_equal,
+                                 assert_series_equal,
                                  patch)
 from pandas.tests.test_panel import assert_panel_equal
 
@@ -336,7 +338,6 @@ class TestSeries(TestPackers):
             'F': [Timestamp('20130102', tz='US/Eastern')] * 2 +
                  [Timestamp('20130603', tz='CET')] * 3,
             'G': [Timestamp('20130102', tz='US/Eastern')] * 5,
-            'H': Categorical(['a', 'b', 'c', 'd', 'e'])
         }
 
         self.d['float'] = Series(data['A'])
@@ -344,7 +345,6 @@ class TestSeries(TestPackers):
         self.d['mixed'] = Series(data['E'])
         self.d['dt_tz_mixed'] = Series(data['F'])
         self.d['dt_tz'] = Series(data['G'])
-        self.d['categorical'] = Series(data['H'])
 
     def test_basic(self):
 
@@ -353,6 +353,28 @@ class TestSeries(TestPackers):
             for s, i in self.d.items():
                 i_rec = self.encode_decode(i)
                 assert_series_equal(i, i_rec)
+
+
+class TestCategorical(TestPackers):
+
+    def setUp(self):
+        super(TestCategorical, self).setUp()
+
+        self.d = {}
+
+        self.d['plain_str'] = Categorical(['a', 'b', 'c', 'd', 'e'])
+        self.d['plain_str_ordered'] = Categorical(['a', 'b', 'c', 'd', 'e'], ordered=True)
+
+        self.d['plain_int'] = Categorical([5, 6, 7, 8])
+        self.d['plain_int_ordered'] = Categorical([5, 6, 7, 8], ordered=True)
+
+    def test_basic(self):
+
+        # run multiple times here
+        for n in range(10):
+            for s, i in self.d.items():
+                i_rec = self.encode_decode(i)
+                assert_categorical_equal(i, i_rec)
 
 
 class TestNDFrame(TestPackers):

@@ -268,14 +268,6 @@ def convert(values):
     if dtype == np.object_:
         return v.tolist()
 
-    if is_categorical_dtype(dtype):
-        return {
-            'codes': {'dtype': values.codes.dtype.name,
-                      'data': convert(values.codes)},
-            'categories': {'dtype': values.categories.dtype.name,
-                           'data': convert(values.categories.values)}
-        }
-
     if compressor == 'zlib':
         _check_zlib()
 
@@ -308,15 +300,6 @@ def unconvert(values, dtype, compress=None):
 
     if as_is_ext:
         values = values.data
-
-    if is_categorical_dtype(dtype):
-        return Categorical.from_codes(
-            unconvert(values['codes']['data'],
-                      dtype_for(values['codes']['dtype']),
-                      compress=compress),
-            unconvert(values['categories']['data'],
-                      dtype_for(values['categories']['dtype']),
-                      compress=compress))
 
     if dtype == np.object_:
         return np.array(values, dtype=object)

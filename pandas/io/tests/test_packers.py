@@ -390,7 +390,8 @@ class TestNDFrame(TestPackers):
             'E': [0., 1, Timestamp('20100101'), 'foo', 2.],
             'F': [Timestamp('20130102', tz='US/Eastern')] * 5,
             'G': [Timestamp('20130603', tz='CET')] * 5,
-            'H': Categorical(['a', 'b', 'c', 'd', 'e'])
+            'H': Categorical(['a', 'b', 'c', 'd', 'e']),
+            'I': Categorical(['a', 'b', 'c', 'd', 'e'], ordered=True),
         }
 
         self.frame = {

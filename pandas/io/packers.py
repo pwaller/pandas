@@ -403,8 +403,8 @@ def encode(obj):
                 u'name': getattr(obj, 'name', None),
                 u'codes_dtype': u(obj._codes.dtype.name),
                 u'categories_dtype': u(obj.categories.dtype.name),
-                u'codes': convert(obj._codes),
-                u'categories': convert(obj.categories),
+                u'codes': obj._codes,
+                u'categories': obj.categories,
                 u'ordered': obj.ordered,
                 u'compress': compressor}
 
@@ -592,18 +592,9 @@ def decode(obj):
         return result
 
     elif typ == u'categorical':
-
-        codes = unconvert(obj[u'codes'],
-                          dtype_for(obj[u'codes_dtype']),
-                          obj[u'compress'])
-
-        categories = unconvert(obj['categories'],
-                               dtype_for(obj[u'categories_dtype']),
-                               obj[u'compress'])
-
         from_codes = globals()[obj[u'klass']].from_codes
-        return from_codes(codes=codes,
-                          categories=categories,
+        return from_codes(codes=obj[u'codes'],
+                          categories=obj[u'categories'],
                           ordered=obj[u'ordered'],
                           name=obj[u'name'])
 

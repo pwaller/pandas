@@ -265,6 +265,9 @@ def convert(values):
     v = values.ravel()
 
     # convert object
+    if is_categorical_dtype(values):
+        return v
+
     if dtype == np.object_:
         return v.tolist()
 
@@ -300,6 +303,9 @@ def unconvert(values, dtype, compress=None):
 
     if as_is_ext:
         values = values.data
+
+    if is_categorical_dtype(dtype):
+        return values
 
     if dtype == np.object_:
         return np.array(values, dtype=object)
